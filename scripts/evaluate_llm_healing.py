@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 # --- Configuration ---
 DATA_DIR_BASE = "./data/llm_healing"
 
-MODELS_TO_TEST = [
+ALL_MODELS = [
     "openai/gpt-4.1-mini",
     "meta-llama/llama-3-8b-instruct",
     "google/gemini-2.5-flash-lite-preview-06-17",
@@ -129,7 +129,7 @@ def is_valid_list(text):
         return False
     return all(not line.strip().startswith(('-', '*', '.')) for line in lines)
 
-def run_evaluation(dataset_type):
+def run_evaluation(dataset_type, models_to_test, strategies_to_test):
     """Runs the evaluation and prints a report."""
     if not os.environ.get("OPENROUTER_API_KEY"):
         logger.error("OPENROUTER_API_KEY environment variable not set. Cannot run evaluation.")
@@ -137,7 +137,7 @@ def run_evaluation(dataset_type):
 
     data_dir = os.path.join(DATA_DIR_BASE, dataset_type)
     dataset = load_dataset(data_dir)
-    prompt_strategies = get_prompt_strategies(dataset_type)
+    all_strategies = get_prompt_strategies(dataset_type)
     results = {}
 
     if dataset_type == 'json':
@@ -147,9 +147,16 @@ def run_evaluation(dataset_type):
     else:
         validation_fn = is_valid_list
 
-    for model_name in MODELS_TO_TEST:
+    if not strategies_to_test:
+        strategies_to_test = all_strategies.keys()
+
+    for model_name in models_to_test:
         results[model_name] = {}
-        for strategy_name, strategy_args in prompt_strategies.items():
+        for strategy_name in strategies_to_test:
+            if strategy_name not in all_strategies:
+                logger.warning(f"Strategy '{strategy_name}' not found for dataset '{dataset_type}'. Skipping.")
+                continue
+            strategy_args = all_strategies[strategy_name]
             logger.info(f"--- Testing Model: {model_name}, Strategy: {strategy_name} ---")
             success_count = 0
             total_count = 0
@@ -195,7 +202,13 @@ def run_evaluation(dataset_type):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate LLM self-healing capabilities.")
     parser.add_argument("dataset_type", choices=["json", "clue_answer", "list_of_strings"], help="The type of dataset to evaluate.")
+    parser.add_argument("--models", type=str, default=",".join(ALL_MODELS), help="A comma-separated list of models to test.")
+    parser.add_argument("--strategies", type=str, default="", help="A comma-separated list of strategies to test.")
     parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"], help="Set the logging level.")
     args = parser.parse_args()
+    
+    models_to_test = [model.strip() for model in args.models.split(',')]
+    strategies_to_test = [strategy.strip() for strategy in args.strategies.split(',')] if args.strategies else []
+
     setup_logging(args.log_level)
-    run_evaluation(args.dataset_type)
+    run_evaluation(args.dataset_type, models_to_test, strategies_to_test)
