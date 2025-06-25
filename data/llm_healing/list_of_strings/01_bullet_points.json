@@ -1,0 +1,5 @@
+{
+    "name": "List with bullet points",
+    "broken": "- Apples\n- Oranges\n- Bananas",
+    "expected": "healable"
+}

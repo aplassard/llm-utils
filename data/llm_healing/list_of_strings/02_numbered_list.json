@@ -1,0 +1,5 @@
+{
+    "name": "Numbered list",
+    "broken": "1. Red\\n2. Green\\n3. Blue",
+    "expected": "healable"
+}

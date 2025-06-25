@@ -1,0 +1,5 @@
+{
+    "name": "JSON with nested error",
+    "broken": "{\"user\": {\"name\": \"Alice\", \"details\": {\"age\": 28, \"city\": \"Wonderland\",}}, \"status\": \"active\"}",
+    "expected": "healable"
+}

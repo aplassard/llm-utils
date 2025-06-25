@@ -1,0 +1,5 @@
+{
+    "name": "Run-on sentence list",
+    "broken": "The primary colors are red green and blue.",
+    "expected": "healable"
+}

@@ -1,0 +1,5 @@
+{
+    "name": "JSON with comments",
+    "broken": "{\"key\": \"value\", // This is a comment\n\"another_key\": \"another_value\"}",
+    "expected": "healable"
+}

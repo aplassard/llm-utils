@@ -1,0 +1,5 @@
+{
+    "name": "Mixed format list",
+    "broken": "* Item 1\n* Item 2, Item 3",
+    "expected": "healable"
+}

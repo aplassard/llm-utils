@@ -1,0 +1,5 @@
+{
+    "name": "JSON with missing comma",
+    "broken": "{\"name\": \"Peter Pan\" \"age\": 12}",
+    "expected": "healable"
+}

@@ -1,0 +1,5 @@
+{
+    "name": "Empty list",
+    "broken": "There are no items to list.",
+    "expected": "not_healable"
+}

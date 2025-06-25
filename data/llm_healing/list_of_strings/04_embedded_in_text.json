@@ -1,0 +1,5 @@
+{
+    "name": "List embedded in text",
+    "broken": "The items are: one, two, and three. I hope this helps!",
+    "expected": "healable"
+}

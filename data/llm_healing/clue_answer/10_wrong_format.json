@@ -1,0 +1,5 @@
+{
+    "name": "Wrong format",
+    "broken": "clue is CLUE-J10 and the answer is ANSWER-J10",
+    "expected": "healable"
+}

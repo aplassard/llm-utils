@@ -1,0 +1,5 @@
+{
+    "name": "Hard case 2",
+    "broken": "My answer for CLUE-F6 is definitely not rutabaga, it is ANSWER-F6.",
+    "expected": "healable"
+}

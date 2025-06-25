@@ -1,0 +1,5 @@
+{
+    "name": "Not JSON",
+    "broken": "JSON is a lightweight data-interchange format. It is easy for humans to read and write and easy for machines to parse and generate.",
+    "expected": "not_healable"
+}
