@@ -201,7 +201,7 @@ def run_evaluation(dataset_type, models_to_test, strategies_to_test):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate LLM self-healing capabilities.")
-    parser.add_argument("dataset_type", choices=["json", "clue_answer", "list_of_strings"], help="The type of dataset to evaluate.")
+    parser.add_argument("--dataset", type=str, required=True, choices=["json", "clue_answer", "list_of_strings"], help="The type of dataset to evaluate.")
     parser.add_argument("--models", type=str, default=",".join(ALL_MODELS), help="A comma-separated list of models to test.")
     parser.add_argument("--strategies", type=str, default="", help=f"A comma-separated list of strategies to test. Available strategies: {list(get_prompt_strategies('json').keys())}")
     parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"], help="Set the logging level.")
@@ -211,4 +211,4 @@ if __name__ == "__main__":
     strategies_to_test = [strategy.strip() for strategy in args.strategies.split(',')] if args.strategies else []
 
     setup_logging(args.log_level)
-    run_evaluation(args.dataset_type, models_to_test, strategies_to_test)
+    run_evaluation(args.dataset, models_to_test, strategies_to_test)
