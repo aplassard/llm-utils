@@ -106,7 +106,7 @@ def is_valid_json(text):
     """Checks if a string is valid JSON."""
     try:
         # Attempt to strip any markdown and then load
-        match = re.search(r'```json\n(.*?)', text, re.DOTALL)
+        match = re.search(r'```json\n(.*?)```', text, re.DOTALL)
         if match:
             text = match.group(1)
         json.loads(text)
@@ -203,7 +203,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate LLM self-healing capabilities.")
     parser.add_argument("dataset_type", choices=["json", "clue_answer", "list_of_strings"], help="The type of dataset to evaluate.")
     parser.add_argument("--models", type=str, default=",".join(ALL_MODELS), help="A comma-separated list of models to test.")
-    parser.add_argument("--strategies", type=str, default="", help="A comma-separated list of strategies to test.")
+    parser.add_argument("--strategies", type=str, default="", help=f"A comma-separated list of strategies to test. Available strategies: {list(get_prompt_strategies('json').keys())}")
     parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"], help="Set the logging level.")
     args = parser.parse_args()
     
