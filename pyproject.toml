@@ -1,7 +1,20 @@
-[project]
+[tool.poetry]
 name = "llm-utils"
 version = "0.1.0"
-description = "Add your description here"
+description = "Utilities for Large Language Models"
+authors = ["Jules <you@example.com>"]
 readme = "README.md"
-requires-python = ">=3.12"
-dependencies = []
+packages = [
+    { include = "llmutils" },
+]
+
+[tool.poetry.dependencies]
+python = ">=3.12"
+langchain-openai = ">=0.1.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
