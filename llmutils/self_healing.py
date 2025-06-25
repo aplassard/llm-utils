@@ -1,8 +1,6 @@
-# This file will contain the self_healing_text function.
 import os
 import logging
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage
+from llmutils.llm_with_retry import call_llm_with_retry
 
 # Configure basic logging
 logging.basicConfig(level=logging.INFO)
@@ -22,26 +20,12 @@ def heal_llm_output(broken_text: str, prompt_template: str, model_name: str = "o
         The healed text.
 
     Raises:
-        Exception: If the LLM call fails.
+        tenacity.RetryError: If the LLM call fails after all retries.
     """
-    if not os.environ.get("OPENROUTER_API_KEY"):
-        logger.error("OPENROUTER_API_KEY environment variable not set.")
-        raise ValueError("OPENROUTER_API_KEY must be set in the environment.")
-
     prompt_message = prompt_template.format(broken_text=broken_text)
 
     logger.info(f"Attempting to heal LLM output with model: {model_name}...")
-    try:
-        llm = ChatOpenAI(
-            model_name=model_name,
-            openai_api_base="https://openrouter.ai/api/v1",
-            openai_api_key=os.environ.get("OPENROUTER_API_KEY")
-        )
-        response = llm.invoke([HumanMessage(content=prompt_message)])
-        healed_text = response.content
-        logger.info("LLM healing call successful.")
-        return healed_text
-    except Exception as e:
-        logger.error(f"LLM healing call failed. Error: {e}")
-        # Re-raising the exception to make it visible if healing fails.
-        raise
+    healed_text = call_llm_with_retry(model_name, prompt_message)
+    logger.info("LLM healing call successful.")
+    return healed_text
+
