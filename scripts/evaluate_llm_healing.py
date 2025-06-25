@@ -10,39 +10,82 @@ logger = logging.getLogger(__name__)
 
 # --- Configuration ---
 DATA_DIR_BASE = "./data/llm_healing"
-PROMPT_FILE = "./scripts/two-shot-prompt.md"
 
-MODELS_TO_TEST = [                                                                                 
-"openai/gpt-4.1-mini",
-"meta-llama/llama-3-8b-instruct",
-"google/gemini-2.5-flash-lite-preview-06-17",
-"openai/gpt-4.1-nano",
-"anthropic/claude-3-haiku",
-"deepseek/deepseek-chat-v3-0324"
-
+ALL_MODELS = [
+    "openai/gpt-4.1-mini",
+    "meta-llama/llama-3-8b-instruct",
+    "google/gemini-2.5-flash-lite-preview-06-17",
+    "openai/gpt-4.1-nano",
+    "anthropic/claude-3-haiku",
+    "deepseek/deepseek-chat-v3-0324"
 ]
 
-def load_prompts(dataset_type):
-    """Loads all prompts to be tested."""
+def get_prompt_strategies(dataset_type):
+    """Loads all prompt strategies to be tested."""
     if dataset_type == 'json':
-        prompts = {
-            "simple": "Fix the following text to be valid JSON: {broken_text}",
-            "explicit": "The following text is supposed to be a single, valid JSON object, but it is malformed. Correct the syntax errors. Only output the corrected JSON object, with no other text or explanation.\n\n{broken_text}",
-            "role_playing": "You are an expert system that corrects malformed JSON. Your only task is to take the input text and output a syntactically correct JSON object. Do not add any commentary. Here is the input:\n\n{broken_text}"
+        strategies = {
+            "simple": {
+                "expected_format": "A single, valid JSON object.",
+            },
+            "with_instructions": {
+                "expected_format": "A single, valid JSON object.",
+                "instructions": "The following text is supposed to be a single, valid JSON object, but it is malformed. Correct the syntax errors. Only output the corrected JSON object, with no other text or explanation.",
+            },
+            "with_examples": {
+                "expected_format": "A single, valid JSON object.",
+                "instructions": "The following text is supposed to be a single, valid JSON object, but it is malformed. Correct the syntax errors. Only output the corrected JSON object, with no other text or explanation.",
+                "good_examples": [
+                    json.dumps({"broken": '{"key": "value",}', "healed": '{"key": "value"}'}),
+                    json.dumps({"broken": "{'key': 'value'}", "healed": '{"key": "value"}'})
+                ],
+                "bad_examples": [
+                    json.dumps({"broken": "This is not json", "healed": "INVALID_JSON"})
+                ],
+                "parsing_code": "import json\njson.loads(text)"
+            }
         }
-        with open(PROMPT_FILE, 'r') as f:
-            prompts['two_shot'] = f.read()
     elif dataset_type == 'clue_answer':
-        prompts = {
-            "simple": "Extract the clue and answer from the following text and format it as 'clue: <clue_id>\nanswer: <answer_id>': {broken_text}",
-            "explicit": "The following text contains a clue and an answer. Your task is to extract them and format them exactly as 'clue: <clue_id>\nanswer: <answer_id>'. Do not include any other text or explanation.\n\n{broken_text}"
+        strategies = {
+            "simple": {
+                "expected_format": "clue: <clue_id>\nanswer: <answer_id>",
+            },
+            "with_instructions": {
+                "expected_format": "clue: <clue_id>\nanswer: <answer_id>",
+                "instructions": "The following text contains a clue and an answer. Your task is to extract them and format them exactly as 'clue: <clue_id>\nanswer: <answer_id>'. Do not include any other text or explanation.",
+            },
+            "with_examples": {
+                "expected_format": "clue: <clue_id>\nanswer: <answer_id>",
+                "instructions": "The following text contains a clue and an answer. Your task is to extract them and format them exactly as 'clue: <clue_id>\nanswer: <answer_id>'. Do not include any other text or explanation.",
+                "good_examples": [
+                    json.dumps({"broken": "The clue is C1 and the answer is A1", "healed": "clue: C1\nanswer: A1"}),
+                ],
+                "bad_examples": [
+                    json.dumps({"broken": "There is no answer here.", "healed": "clue: <not_found>\nanswer: <not_found>"}),
+                ],
+                "parsing_code": "import re\nre.match(r'^clue: .*\\nanswer: .*$', text.strip(), re.IGNORECASE)"
+            }
         }
     elif dataset_type == 'list_of_strings':
-        prompts = {
-            "simple": "Extract the list of items from the following text and format them as a newline-separated list: {broken_text}",
-            "explicit": "The following text contains a list of items. Your task is to extract them and format them as a newline-separated list, with no other text or explanation.\n\n{broken_text}"
+        strategies = {
+            "simple": {
+                "expected_format": "A newline-separated list of strings.",
+            },
+            "with_instructions": {
+                "expected_format": "A newline-separated list of strings.",
+                "instructions": "The following text contains a list of items. Your task is to extract them and format them as a newline-separated list, with no other text or explanation.",
+            },
+            "with_examples": {
+                "expected_format": "A newline-separated list of strings.",
+                "instructions": "The following text contains a list of items. Your task is to extract them and format them as a newline-separated list, with no other text or explanation.",
+                "good_examples": [
+                    json.dumps({"broken": "- item 1\n- item 2", "healed": "item 1\nitem 2"}),
+                ],
+                "bad_examples": [
+                    json.dumps({"broken": "There are no items here.", "healed": ""}),
+                ]
+            }
         }
-    return prompts
+    return strategies
 
 def setup_logging(log_level):
     """Sets up the logging configuration."""
@@ -62,25 +105,31 @@ def load_dataset(data_dir):
 def is_valid_json(text):
     """Checks if a string is valid JSON."""
     try:
+        # Attempt to strip any markdown and then load
+        match = re.search(r'```json\n(.*?)```', text, re.DOTALL)
+        if match:
+            text = match.group(1)
         json.loads(text)
         return True
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, AttributeError):
         return False
 
 def is_valid_clue_answer(text):
     """Checks if a string is a valid clue/answer format."""
-    pattern = re.compile(r"^clue: .*\\nanswer: .*$", re.IGNORECASE)
+    pattern = re.compile(r"^clue: .*\nanswer: .*$", re.IGNORECASE | re.DOTALL)
     return bool(pattern.match(text.strip()))
 
 def is_valid_list(text):
     """Checks if a string is a valid newline-separated list."""
     # A valid list has at least one non-empty line and no special list markers (like - or *)
     lines = text.strip().split('\n')
-    if not lines or not all(lines):
+    if not lines or (len(lines) == 1 and not lines[0]):
+        return True # Empty list is valid for not_healable cases
+    if not all(lines):
         return False
     return all(not line.strip().startswith(('-', '*', '.')) for line in lines)
 
-def run_evaluation(dataset_type):
+def run_evaluation(dataset_type, models_to_test, strategies_to_test):
     """Runs the evaluation and prints a report."""
     if not os.environ.get("OPENROUTER_API_KEY"):
         logger.error("OPENROUTER_API_KEY environment variable not set. Cannot run evaluation.")
@@ -88,7 +137,7 @@ def run_evaluation(dataset_type):
 
     data_dir = os.path.join(DATA_DIR_BASE, dataset_type)
     dataset = load_dataset(data_dir)
-    prompts_to_test = load_prompts(dataset_type)
+    all_strategies = get_prompt_strategies(dataset_type)
     results = {}
 
     if dataset_type == 'json':
@@ -98,17 +147,28 @@ def run_evaluation(dataset_type):
     else:
         validation_fn = is_valid_list
 
-    for model_name in MODELS_TO_TEST:
+    if not strategies_to_test:
+        strategies_to_test = all_strategies.keys()
+
+    for model_name in models_to_test:
         results[model_name] = {}
-        for prompt_name, prompt_template in prompts_to_test.items():
-            logger.info(f"--- Testing Model: {model_name}, Prompt: {prompt_name} ---")
+        for strategy_name in strategies_to_test:
+            if strategy_name not in all_strategies:
+                logger.warning(f"Strategy '{strategy_name}' not found for dataset '{dataset_type}'. Skipping.")
+                continue
+            strategy_args = all_strategies[strategy_name]
+            logger.info(f"--- Testing Model: {model_name}, Strategy: {strategy_name} ---")
             success_count = 0
             total_count = 0
 
             for item in dataset:
                 total_count += 1
                 try:
-                    healed_text = heal_llm_output(item['broken'], prompt_template, model_name)
+                    healed_text = heal_llm_output(
+                        broken_text=item['broken'],
+                        model_name=model_name,
+                        **strategy_args
+                    )
                     logger.debug(f"    LLM Output for {item['filename']}:\n---\n{healed_text}\n---")
                     is_healed = validation_fn(healed_text)
 
@@ -128,23 +188,27 @@ def run_evaluation(dataset_type):
                 except Exception as e:
                     logger.error(f"  [ERROR] {item['filename']}: An error occurred: {e}")
 
-            results[model_name][prompt_name] = {
+            results[model_name][strategy_name] = {
                 "success_rate": f"{success_count}/{total_count}"
             }
 
     # Print final report
     print("\n--- Evaluation Report ---")
-    for model_name, prompts in results.items():
+    for model_name, strategies in results.items():
         print(f"\nModel: {model_name}")
-        for prompt_name, result in prompts.items():
-            print(f"  Prompt: {prompt_name:<15} | Success Rate: {result['success_rate']}")
+        for strategy_name, result in strategies.items():
+            print(f"  Strategy: {strategy_name:<20} | Success Rate: {result['success_rate']}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate LLM self-healing capabilities.")
-    parser.add_argument("dataset_type", choices=["json", "clue_answer", "list_of_strings"], help="The type of dataset to evaluate.")
+    parser.add_argument("--dataset", type=str, required=True, choices=["json", "clue_answer", "list_of_strings"], help="The type of dataset to evaluate.")
+    parser.add_argument("--models", type=str, default=",".join(ALL_MODELS), help="A comma-separated list of models to test.")
+    parser.add_argument("--strategies", type=str, default="", help=f"A comma-separated list of strategies to test. Available strategies: {list(get_prompt_strategies('json').keys())}")
     parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"], help="Set the logging level.")
     args = parser.parse_args()
+    
+    models_to_test = [model.strip() for model in args.models.split(',')]
+    strategies_to_test = [strategy.strip() for strategy in args.strategies.split(',')] if args.strategies else []
+
     setup_logging(args.log_level)
-    run_evaluation(args.dataset_type)
-
-
+    run_evaluation(args.dataset, models_to_test, strategies_to_test)
