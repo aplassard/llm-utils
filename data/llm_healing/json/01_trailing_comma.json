@@ -1,0 +1,5 @@
+{
+    "name": "JSON with trailing comma",
+    "broken": "{\"name\": \"John Doe\", \"age\": 30,}",
+    "expected": "healable"
+}

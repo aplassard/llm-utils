@@ -1,0 +1,5 @@
+{
+    "name": "Swapped order",
+    "broken": "answer: ANSWER-C3\nclue: CLUE-C3",
+    "expected": "healable"
+}

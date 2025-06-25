@@ -1,0 +1,5 @@
+{
+    "name": "Just text",
+    "broken": "This is a test of the emergency broadcast system.",
+    "expected": "not_healable"
+}

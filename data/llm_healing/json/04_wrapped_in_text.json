@@ -1,0 +1,5 @@
+{
+    "name": "JSON wrapped in text",
+    "broken": "Here is the JSON: {\"name\": \"Captain Hook\", \"ship\": \"Jolly Roger\"}",
+    "expected": "healable"
+}

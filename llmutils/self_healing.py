@@ -3,7 +3,6 @@ import logging
 from llmutils.llm_with_retry import call_llm_with_retry
 
 # Configure basic logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def heal_llm_output(broken_text: str, prompt_template: str, model_name: str = "openai/gpt-4.1-nano") -> str:

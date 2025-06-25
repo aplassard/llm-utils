@@ -1,0 +1,5 @@
+{
+    "name": "Single item list",
+    "broken": "Just one thing: a single item.",
+    "expected": "healable"
+}

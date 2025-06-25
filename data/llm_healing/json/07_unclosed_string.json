@@ -1,0 +1,5 @@
+{
+    "name": "JSON with unclosed string",
+    "broken": "{\"message\": \"Hello, world}",
+    "expected": "healable"
+}

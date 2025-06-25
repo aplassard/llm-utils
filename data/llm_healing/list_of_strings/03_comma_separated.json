@@ -1,0 +1,5 @@
+{
+    "name": "Comma-separated list",
+    "broken": "First, second, third",
+    "expected": "healable"
+}

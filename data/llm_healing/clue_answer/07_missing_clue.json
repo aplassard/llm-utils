@@ -1,0 +1,5 @@
+{
+    "name": "Missing clue",
+    "broken": "answer: ANSWER-G7",
+    "expected": "not_healable"
+}

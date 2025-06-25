@@ -1,0 +1,5 @@
+{
+    "name": "JSON with multiple errors",
+    "broken": "{'user': \"Bob\", \"items\": [1, 2, 3,],}",
+    "expected": "healable"
+}

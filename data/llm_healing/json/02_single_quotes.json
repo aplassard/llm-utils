@@ -1,0 +1,5 @@
+{
+    "name": "JSON with single quotes",
+    "broken": "{'name': 'Jane Doe', 'age': 25}",
+    "expected": "healable"
+}

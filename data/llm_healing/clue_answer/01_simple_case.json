@@ -1,0 +1,5 @@
+{
+    "name": "Simple case",
+    "broken": "clue: CLUE-A1\nanswer: ANSWER-A1",
+    "expected": "healable"
+}

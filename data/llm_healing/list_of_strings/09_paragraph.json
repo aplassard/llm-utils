@@ -1,0 +1,5 @@
+{
+    "name": "Paragraph of text",
+    "broken": "This is a paragraph of text that does not contain a list. It is just a regular sentence.",
+    "expected": "not_healable"
+}
