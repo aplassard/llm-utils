@@ -35,7 +35,33 @@ def test_call_llm_success_first_try(mock_chat_openai, mock_api_key):
     mock_chat_openai.assert_called_once_with(
         model_name="test-model",
         openai_api_base="https://openrouter.ai/api/v1",
-        openai_api_key="mock-api-key-for-testing"
+        openai_api_key="mock-api-key-for-testing",
+        model_kwargs={}
+    )
+    mock_llm_instance.invoke.assert_called_once()
+
+@patch('llmutils.llm_with_retry.ChatOpenAI')
+def test_call_llm_with_model_kwargs(mock_chat_openai, mock_api_key):
+    """
+    Tests that the function correctly passes model_kwargs to the ChatOpenAI constructor.
+    """
+    # Arrange
+    mock_response = AIMessage(content="This is a test response with model_kwargs.")
+    mock_llm_instance = MagicMock()
+    mock_llm_instance.invoke.return_value = mock_response
+    mock_chat_openai.return_value = mock_llm_instance
+    model_kwargs = {"temperature": 0.7, "top_p": 0.9}
+
+    # Act
+    result = call_llm_with_retry("test-model-kwargs", "Hello with kwargs!", model_kwargs=model_kwargs)
+
+    # Assert
+    assert result == "This is a test response with model_kwargs."
+    mock_chat_openai.assert_called_once_with(
+        model_name="test-model-kwargs",
+        openai_api_base="https://openrouter.ai/api/v1",
+        openai_api_key="mock-api-key-for-testing",
+        model_kwargs=model_kwargs
     )
     mock_llm_instance.invoke.assert_called_once()
 

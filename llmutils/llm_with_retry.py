@@ -13,7 +13,7 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
-def call_llm_with_retry(model_name: str, prompt_message: str) -> str:
+def call_llm_with_retry(model_name: str, prompt_message: str, model_kwargs: dict = None) -> str:
     """
     Calls the LLM with the given model name and prompt message.
     Includes retrying with exponential backoff (3 tries, wait 2^x seconds between retries).
@@ -23,7 +23,8 @@ def call_llm_with_retry(model_name: str, prompt_message: str) -> str:
         llm = ChatOpenAI(
             model_name=model_name,
             openai_api_base="https://openrouter.ai/api/v1",
-            openai_api_key=os.environ.get("OPENROUTER_API_KEY")
+            openai_api_key=os.environ.get("OPENROUTER_API_KEY"),
+            model_kwargs=model_kwargs or {}
         )
         response = llm.invoke([HumanMessage(content=prompt_message)])
         logger.info("LLM call successful.")
